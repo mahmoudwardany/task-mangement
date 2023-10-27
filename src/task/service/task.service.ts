@@ -18,7 +18,7 @@ export class TaskService {
     @InjectModel(TaskEntity.name)
     private readonly taskModel: Model<TaskEntity>,
   ) {}
-
+  //Creat Task
   async createTask(body: CreateTaskDto, user: UserEntity): Promise<TaskEntity> {
     const { title, description } = body;
     const newTask = new this.taskModel({ title, description, user });
@@ -27,10 +27,14 @@ export class TaskService {
     await user.save();
     return savedTask;
   }
-
+  //Get All Task
   async getTasks(filter: GetTaskDto): Promise<TaskEntity[]> {
-    const query = this.buildGetTasksQuery(filter);
-    return query.exec();
+    try {
+      const query = this.buildGetTasksQuery(filter);
+      return query.exec();
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findTaskByID(id: ObjectId): Promise<TaskEntity> {
@@ -42,7 +46,7 @@ export class TaskService {
 
     return found;
   }
-
+  //Delete Task
   async deleteTask(
     id: ObjectId,
     user: UserEntity,
@@ -59,7 +63,7 @@ export class TaskService {
     await this.taskModel.deleteOne({ _id: taskId });
     return { message: 'Task Deleted' };
   }
-
+  //Update Status
   async updateStatus(
     id: ObjectId,
     body: UpdateTaskStatusDto,
@@ -76,6 +80,7 @@ export class TaskService {
     task.status = body.status;
     return task.save();
   }
+  //Update Title And Description
   async updateTitleDescription(
     id: ObjectId,
     body: UpdateTaskTitleDescriptionDto,
@@ -92,6 +97,41 @@ export class TaskService {
     task.title = body.title;
     task.description = body.description;
     return task.save();
+  }
+  //Add Comment
+
+  async addCommentToTask(
+    taskId: ObjectId,
+    commentText: string,
+    user: UserEntity,
+  ): Promise<TaskEntity | null> {
+    try {
+      const task = await this.taskModel.findById(taskId);
+
+      if (!task) {
+        return null;
+      }
+
+      task.comments.push({ userId: user.id, commentText });
+      const updatedTask = await task.save();
+      return updatedTask;
+    } catch (error) {
+      throw new Error(`Failed to add comment to the task: ${error}`);
+    }
+  }
+  //Get All Comments For Task
+  async getTaskComments(taskId: ObjectId) {
+    try {
+      const task = await this.taskModel.findById(taskId);
+
+      if (!task) {
+        return [];
+      }
+
+      return task.comments;
+    } catch (error) {
+      throw new Error(`Failed to get comments for the task: ${error}`);
+    }
   }
   //helper
   private buildGetTasksQuery(filter: GetTaskDto) {

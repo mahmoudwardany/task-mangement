@@ -20,6 +20,7 @@ import { AuthenticationGuard } from 'src/util/guard/auth.guard';
 import { TaskStatutsValid } from 'src/util/pipe/task-status.pipe';
 import { ObjectId, Types } from 'mongoose';
 import { UpdateTaskTitleDescriptionDto } from '../dto/updateTitleDesc.dto';
+import { CommentDto } from '../dto/CommentsDto';
 
 @Controller('task')
 export class TaskController {
@@ -81,5 +82,32 @@ export class TaskController {
       body,
       user,
     );
+  }
+  @Post(':taskId/comments')
+  async addComment(
+    @Param('taskId') id: string,
+    @Body() commentDto: CommentDto,
+    @CurrentUser() user: UserEntity,
+  ) {
+    const taskId = new Types.ObjectId(id);
+    try {
+      return await this.taskService.addCommentToTask(
+        taskId as unknown as ObjectId,
+        commentDto.commentText,
+        user,
+      );
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+  //Get Comments
+  @Get(':taskId/comments')
+  async getTaskComments(@Param('taskId') id: string) {
+    const taskId = new Types.ObjectId(id);
+    const comments = await this.taskService.getTaskComments(
+      taskId as unknown as ObjectId,
+    );
+    return comments;
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Injectable,
   NotFoundException,
@@ -76,7 +77,12 @@ export class TaskService {
         'You are not allowed to update this task',
       );
     }
-
+if (
+      (task.status === 'todo' && body.status === 'In Progress') ||
+      (task.status === 'In Progress' && body.status === 'completed')
+    ) {
+      throw new Error('Invalid status transition');
+    }
     task.status = body.status;
     return task.save();
   }
@@ -87,13 +93,11 @@ export class TaskService {
     user: UserEntity,
   ) {
     const task = await this.findTaskByID(id);
-
     if (task?.user.toString() !== user?._id.toString()) {
       throw new UnauthorizedException(
         'You are not allowed to update this task',
       );
     }
-
     task.title = body.title;
     task.description = body.description;
     return task.save();
